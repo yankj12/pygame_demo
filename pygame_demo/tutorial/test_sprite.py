@@ -40,8 +40,20 @@ class Ball(pygame.sprite.Sprite):
 pygame.init()
 screen = pygame.display.set_mode([350, 350])
 
-ball = Ball((255, 0, 0), (100, 100))
-screen.blit(ball.image, ball.rect)
+balls = []
+for color, location in [([255, 0, 0], [50, 50]),
+                        ([0, 255, 0], [100, 100]),
+                        ([0, 0, 255], [150, 150])]:
+    balls.append(Ball(color, location))
+
+
+for b in balls: screen.blit(b.image, b.rect)
 pygame.display.update()
+
+# 我们还能用一种更牛的重绘方式
+# rectlist = [screen.blit(b.image, b.rect) for b in balls]
+# pygame.display.update(rectlist)
+# 这样的好处是，pygame只会重绘有更改的部分
+
 while pygame.event.poll().type != KEYDOWN:
     pygame.time.delay(10)
