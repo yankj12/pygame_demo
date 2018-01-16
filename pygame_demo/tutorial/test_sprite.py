@@ -58,18 +58,22 @@ class MoveBall(Ball):
 pygame.init()
 screen = pygame.display.set_mode([350, 350])
 
-balls = []
+balls = pygame.sprite.Group()
+
 for color, location, speed in [([255, 0, 0], [50, 50], [2, 3]),
                                ([0, 255, 0], [100, 100], [3, 2]),
                                ([0, 0, 255], [150, 150], [4, 3])]:
-    balls.append(MoveBall(color, location, speed, (350, 350)))
+    balls.add(MoveBall(color, location, speed, (350, 350)))
 
 while True:
     if pygame.event.poll().type == QUIT: break
 
     screen.fill((0, 0, 0,))
     current_time = pygame.time.get_ticks()
-    for b in balls:
-        b.update(current_time)
-        screen.blit(b.image, b.rect)
+    # Calls the update() method on all Sprites in the Group. The base Sprite class has an update method that takes any number of arguments and does nothing. The arguments passed to Group.update() will be passed to each Sprite.
+    # There is no way to get the return value from the Sprite.update() methods.
+    balls.update(current_time)
+    # Draws the contained Sprites to the Surface argument. This uses the Sprite.image attribute for the source surface, and Sprite.rect for the position.
+    # The Group does not keep sprites in any order, so the draw order is arbitrary.
+    balls.draw(screen)
     pygame.display.update()
