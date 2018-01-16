@@ -37,23 +37,39 @@ class Ball(pygame.sprite.Sprite):
         self.rect.topleft = initial_position
 
 
+class MoveBall(Ball):
+    def __init__(self, color, initial_position, speed, border):
+        super(MoveBall, self).__init__(color, initial_position)
+        self.speed = speed
+        self.border = border
+        self.update_time = 0
+
+    def update(self, current_time):
+        if self.update_time < current_time:
+            if self.rect.left < 0 or self.rect.left > self.border[0] - self.rect.w:
+                self.speed[0] *= -1
+            if self.rect.top < 0 or self.rect.top > self.border[1] - self.rect.h:
+                self.speed[1] *= -1
+
+            self.rect.x, self.rect.y = self.rect.x + self.speed[0], self.rect.y + self.speed[1]
+            self.update_time = current_time + 10
+
+
 pygame.init()
 screen = pygame.display.set_mode([350, 350])
 
 balls = []
-for color, location in [([255, 0, 0], [50, 50]),
-                        ([0, 255, 0], [100, 100]),
-                        ([0, 0, 255], [150, 150])]:
-    balls.append(Ball(color, location))
+for color, location, speed in [([255, 0, 0], [50, 50], [2, 3]),
+                               ([0, 255, 0], [100, 100], [3, 2]),
+                               ([0, 0, 255], [150, 150], [4, 3])]:
+    balls.append(MoveBall(color, location, speed, (350, 350)))
 
+while True:
+    if pygame.event.poll().type == QUIT: break
 
-for b in balls: screen.blit(b.image, b.rect)
-pygame.display.update()
-
-# 我们还能用一种更牛的重绘方式
-# rectlist = [screen.blit(b.image, b.rect) for b in balls]
-# pygame.display.update(rectlist)
-# 这样的好处是，pygame只会重绘有更改的部分
-
-while pygame.event.poll().type != KEYDOWN:
-    pygame.time.delay(10)
+    screen.fill((0, 0, 0,))
+    current_time = pygame.time.get_ticks()
+    for b in balls:
+        b.update(current_time)
+        screen.blit(b.image, b.rect)
+    pygame.display.update()
