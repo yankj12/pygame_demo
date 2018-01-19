@@ -30,8 +30,8 @@ class Ball(object):
         self.current_row_index = row_index
         self.current_col_index = col_index
         self.color = color
-        self.x = self.current_row_index * square_width + square_width / 2
-        self.y = self.current_col_index * square_width + square_width / 2
+        self.y = self.current_row_index * square_width + square_width / 2
+        self.x = self.current_col_index * square_width + square_width / 2
         self.radius = square_width / 2
 
     def update(self, move=(0,0)):
@@ -41,8 +41,8 @@ class Ball(object):
         self.current_row_index = self.current_row_index%row
         self.current_col_index = self.current_col_index%col
 
-        self.x = self.current_row_index * square_width + square_width / 2
-        self.y = self.current_col_index * square_width + square_width / 2
+        self.y = self.current_row_index * square_width + square_width / 2
+        self.x = self.current_col_index * square_width + square_width / 2
 
 
 def draw_ball(screen, ball):
@@ -59,12 +59,16 @@ def draw_ball(screen, ball):
     pygame.draw.circle(screen, color, position, radius)
 
 #球1是追踪者
-row_index1 = randint(0, 14)
-col_index1 = randint(0, 14)
+#row_index1 = randint(0, 14)
+#col_index1 = randint(0, 14)
+row_index1 = 29
+col_index1 = 1
 ball1 = Ball(row_index1, col_index1)
 #球2是目标
-row_index2 = randint(0, 14)
-col_index2 = randint(0, 14)
+#row_index2 = randint(0, 14)
+#col_index2 = randint(0, 14)
+row_index2 = 1
+col_index2 = 27
 ball2 = Ball(row_index2, col_index2, red)
 
 # 移动向量
@@ -91,7 +95,7 @@ def chase_basic(ball1, ball2):
 
 
 def draw_path(screen, path):
-    points2 = map(lambda (row, col) : (row * square_width + square_width / 2, col * square_width + square_width / 2 ), path)
+    points2 = map(lambda (row, col) : (col * square_width + square_width / 2, row * square_width + square_width / 2 ), path)
     #return points2
     pygame.draw.lines(screen, black, False, points2)
 
