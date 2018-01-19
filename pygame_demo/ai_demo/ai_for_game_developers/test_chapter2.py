@@ -70,6 +70,9 @@ ball2 = Ball(row_index2, col_index2, red)
 # 移动向量
 move = (0, 0)
 
+# 追逐者的路径
+path = [(ball1.current_row_index, ball1.current_col_index)]
+
 # 基本追逐算法
 def chase_basic(ball1, ball2):
     dal_row = 0
@@ -86,6 +89,11 @@ def chase_basic(ball1, ball2):
 
     return (dal_row, dal_col)
 
+
+def draw_path(screen, path):
+    points2 = map(lambda (row, col) : (row * square_width + square_width / 2, col * square_width + square_width / 2 ), path)
+    #return points2
+    pygame.draw.lines(screen, black, False, points2)
 
 while True:
 
@@ -123,10 +131,13 @@ while True:
     # 追逐目标
     move2 = chase_basic(ball1, ball2)
     ball1.update(move2)
+    path.append((ball1.current_row_index, ball1.current_col_index))
 
     # 绘制两个小球
     draw_ball(screen, ball1)
     draw_ball(screen, ball2)
+    # 绘制追逐者的路线
+    draw_path(screen, path)
 
     pygame.display.update()
     sleep(0.5)
