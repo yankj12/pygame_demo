@@ -5,17 +5,20 @@
 import pygame
 from pygame.locals import *
 from random import randint
+import threading
+from time import ctime,sleep
 
 pygame.init()
 
-# 15 * 15
-row = 15
-col = 15
+# 30 * 30
+row = 30
+col = 30
 
 # 每个方块宽高都是20px
 square_width = 20
 screen = pygame.display.set_mode((row * square_width, col * square_width), 0, 32)
 
+# 定义一些颜色
 white = (255, 255, 255)
 black = (0, 0, 0)
 blue = (0, 0, 255)
@@ -43,6 +46,7 @@ class Ball(object):
 
 
 def draw_ball(screen, ball):
+    #print '绘制小球'
     # 绘制一个圆形
     position = ball.x, ball.y
     radius = square_width / 2
@@ -63,7 +67,25 @@ row_index2 = randint(0, 14)
 col_index2 = randint(0, 14)
 ball2 = Ball(row_index2, col_index2, red)
 
+# 移动向量
 move = (0, 0)
+
+# 基本追逐算法
+def chase_basic(ball1, ball2):
+    dal_row = 0
+    dal_col = 0
+    if ball1.current_row_index < ball2.current_row_index:
+        dal_row = 1
+    elif ball1.current_row_index > ball2.current_row_index:
+        dal_row = -1
+
+    if ball1.current_col_index < ball2.current_col_index:
+        dal_col = 1
+    elif ball1.current_col_index > ball2.current_col_index:
+        dal_col = -1
+
+    return (dal_row, dal_col)
+
 
 while True:
 
@@ -98,9 +120,13 @@ while True:
     for c in range(0, col + 1):
         pygame.draw.aaline(screen, black, (c * square_width, 0), (c * square_width, col * square_width))
 
+    # 追逐目标
+    move2 = chase_basic(ball1, ball2)
+    ball1.update(move2)
 
     # 绘制两个小球
     draw_ball(screen, ball1)
     draw_ball(screen, ball2)
 
     pygame.display.update()
+    sleep(0.5)
