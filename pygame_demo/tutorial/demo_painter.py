@@ -3,7 +3,7 @@
 
 import pygame
 from pygame.locals import *
-
+import math
 
 class Brush():
     def __init__(self, screen):
@@ -12,6 +12,14 @@ class Brush():
         self.size = 1
         self.drawing = False
         self.last_pos = None
+        self.space = 1
+        # if style is True, normal solid brush
+        # if style is False, png brush
+        self.style = False
+        # load brush style png
+        self.brush = pygame.image.load("brush.png").convert_alpha()
+        # set the current brush depends on size
+        self.brush_now = self.brush.subsurface((0, 0), (1, 1))
 
     def start_draw(self, pos):
         self.drawing = True
@@ -20,10 +28,51 @@ class Brush():
     def end_draw(self):
         self.drawing = False
 
+    def set_brush_style(self, style):
+        print "* set brush style to", style
+        self.style = style
+
+    def get_brush_style(self):
+        return self.style
+
+    def set_size(self, size):
+        if size < 0.5:
+            size = 0.5
+        elif size > 50:
+            size = 50
+        print "* set brush size to", size
+        self.size = size
+        self.brush_now = self.brush.subsurface((0, 0), (size * 2, size * 2))
+
+    def get_size(self):
+        return self.size
+
     def draw(self, pos):
         if self.drawing:
-            pygame.draw.circle(self.screen, self.color, pos, self.size)
+            for p in self._get_points(pos):
+                # draw eveypoint between them
+                if self.style == False:
+                    pygame.draw.circle(self.screen,
+                                       self.color, p, self.size)
+                else:
+                    self.screen.blit(self.brush_now, p)
+
             self.last_pos = pos
+
+    def _get_points(self, pos):
+        """ Get all points between last_point ~ now_point. """
+        points = [(self.last_pos[0], self.last_pos[1])]
+        len_x = pos[0] - self.last_pos[0]
+        len_y = pos[1] - self.last_pos[1]
+        length = math.sqrt(len_x ** 2 + len_y ** 2)
+        step_x = len_x / length
+        step_y = len_y / length
+        for i in xrange(int(length)):
+            points.append(
+                (points[-1][0] + step_x, points[-1][1] + step_y))
+        points = map(lambda x: (int(0.5 + x[0]), int(0.5 + x[1])), points)
+        # return light-weight, uniq list
+        return list(set(points))
 
 
 class Painter():
