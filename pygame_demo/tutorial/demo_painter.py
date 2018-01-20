@@ -148,7 +148,6 @@ class Menu():
             y = y - size
             self.screen.blit(self.brush.get_current_brush(), (x, y))
         else:
-            print (x, y), ' ', size
             pygame.draw.circle(self.screen,
                                self.brush.get_color(), (x, y), size)
         # draw colors panel
