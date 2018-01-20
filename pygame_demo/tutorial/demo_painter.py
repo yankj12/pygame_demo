@@ -11,9 +11,11 @@ class Brush():
         self.color = (0, 0, 0)
         self.size = 1
         self.drawing = False
+        self.last_pos = None
 
-    def start_draw(self):
+    def start_draw(self, pos):
         self.drawing = True
+        self.last_pos = pos
 
     def end_draw(self):
         self.drawing = False
@@ -21,6 +23,7 @@ class Brush():
     def draw(self, pos):
         if self.drawing:
             pygame.draw.circle(self.screen, self.color, pos, self.size)
+            self.last_pos = pos
 
 
 class Painter():
@@ -39,19 +42,11 @@ class Painter():
                 if event.type == QUIT:
                     return
                 elif event.type == KEYDOWN:
-                    pass
-                elif event.type == MOUSEBUTTONDOWN:
-                    pass
-                elif event.type == MOUSEMOTION:
-                    pass
-                elif event.type == MOUSEBUTTONUP:
-                    pass
-                elif event.type == KEYDOWN:
                     # press esc to clear screen
                     if event.key == K_ESCAPE:
                         self.screen.fill((255, 255, 255))
                 elif event.type == MOUSEBUTTONDOWN:
-                    self.brush.start_draw()
+                    self.brush.start_draw(event.pos)
                 elif event.type == MOUSEMOTION:
                     self.brush.draw(event.pos)
                 elif event.type == MOUSEBUTTONUP:
