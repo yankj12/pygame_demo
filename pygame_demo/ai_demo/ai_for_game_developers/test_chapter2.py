@@ -7,6 +7,7 @@ from pygame.locals import *
 from random import randint
 import threading
 from time import ctime,sleep
+import math
 
 pygame.init()
 
@@ -94,6 +95,26 @@ def chase_basic(ball1, ball2):
     return (dal_row, dal_col)
 
 
+# 计算巨人移动方向的bresenham算法，会以起点（ball1）和终点（ball2）为数据，算出ball1要走的一连串步伐，使其能以一连串步伐走向ball2。
+# 每次ball2移动位置，都需要重新调用这个方法一遍来计算步伐
+def chase_bresenham(ball1, ball2):
+    # 计算移动方向
+    delta_row = ball2.current_row_index - ball1.current_row_index
+    delta_col = ball2.current_col_index - ball1.current_col_index
+
+    if delta_row == 0 and delta_col == 0:
+        return (0, 0)
+
+    if math.fabs(delta_row) > math.fabs(delta_col):
+        move = (int(delta_row/math.fabs(delta_row)), 0)
+    elif math.fabs(delta_row) < math.fabs(delta_col):
+        move = (0, int(delta_col / math.fabs(delta_col)))
+    else:
+        move = (int(delta_row/math.fabs(delta_row)), int(delta_col / math.fabs(delta_col)))
+
+    return move
+
+
 def draw_path(screen, path):
     points2 = map(lambda (row, col) : (col * square_width + square_width / 2, row * square_width + square_width / 2 ), path)
     #return points2
@@ -133,7 +154,10 @@ while True:
         pygame.draw.aaline(screen, black, (c * square_width, 0), (c * square_width, col * square_width))
 
     # 追逐目标
-    move2 = chase_basic(ball1, ball2)
+    # 基本追逐算法
+    #move2 = chase_basic(ball1, ball2)
+    # bresenham算法
+    move2 = chase_bresenham(ball1, ball2)
     ball1.update(move2)
     path.append((ball1.current_row_index, ball1.current_col_index))
 
