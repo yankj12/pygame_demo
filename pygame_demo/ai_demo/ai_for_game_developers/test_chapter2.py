@@ -71,7 +71,7 @@ row_index2 = 1
 col_index2 = 27
 ball2 = Ball(row_index2, col_index2, red)
 
-# 移动向量
+# 移动向量(delta_row, delta_col)
 move = (0, 0)
 
 # 追逐者的路径
@@ -107,17 +107,17 @@ while True:
         if event.type == KEYDOWN:
             if event.key == K_LEFT:
                 # 按下的是左方向键的话，把x坐标减一
-                move = (-1, 0)
+                move = (0, -1)
                 ball2.update(move)
             elif event.key == K_RIGHT:
                 # 右方向键则加一
-                move = (1, 0)
+                move = (0, 1)
                 ball2.update(move)
             elif event.key == K_UP:
-                move = (0, -1)
+                move = (-1, 0)
                 ball2.update(move)
             elif event.key == K_DOWN:
-                move = (0, 1)
+                move = (1, 0)
                 ball2.update(move)
         elif event.type == KEYUP:
             # 如果用户放开了键盘，图就不要动了
