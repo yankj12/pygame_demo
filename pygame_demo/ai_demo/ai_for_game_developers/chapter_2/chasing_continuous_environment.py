@@ -37,6 +37,17 @@ class Boat(object):
         self.speed = speed
 
 
+def format_boat_direction(direction):
+    if math.fmod(direction, 360) >= 180:
+        direction = -360 + math.fmod(direction, 360)
+    elif math.fmod(direction, 360) <= 180 and math.fmod(direction, 360) > -180:
+        direction = math.fmod(direction, 360)
+    elif math.fmod(direction, 360) <= -180:
+        direction = 360 + math.fmod(direction, 360)
+    else:
+        direction = math.fmod(direction, 360)
+    return direction
+
 boat1 = Boat(100, 100, 30, 40, 20, 10)
 
 def draw_boat(screen, boat):
@@ -123,6 +134,12 @@ def chase_bresenham(ball1, ball2):
     return move
 
 
+clock = pygame.time.Clock()
+# 显示boat1的速度和角度
+font = pygame.font.SysFont("simsunnsimsun", 10)
+text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
+
+
 while True:
 
     for event in pygame.event.get():
@@ -147,19 +164,26 @@ while True:
             # 如果用户放开了键盘，图就不要动了
             move = (0, 0)
 
+    time_passed = clock.tick(30)
+    time_passed_seconds = time_passed / 1000.0
+
     # 计算运动
     speed = boat1.speed
     angle_degrees = boat1.direction
     speed_x = speed * math.cos(math.radians(angle_degrees))
     speed_y = speed * math.sin(math.radians(angle_degrees))
 
-    boat1.center_x = boat1.center_x + speed_x
-    boat1.center_y = boat1.center_y + speed_y
+    boat1.center_x = boat1.center_x + speed_x * time_passed_seconds
+    boat1.center_y = boat1.center_y + speed_y * time_passed_seconds
 
     # 绘制白色背景色
     screen.fill(white)
     # 绘制boat1
     draw_boat(screen, boat1)
+
+    # 显示boat1的速度和角度
+    text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
+    screen.blit(text_surface, (0, 0))
 
     pygame.display.update()
     sleep(0.5)
