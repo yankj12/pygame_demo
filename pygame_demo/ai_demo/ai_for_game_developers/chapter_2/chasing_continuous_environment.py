@@ -26,7 +26,7 @@ deep_sky_blue = (0, 191, 255)
 red = (255, 0, 0)
 
 class Boat(object):
-    def __init__(self, x, y, direction, boat_length, boat_width, color=deep_sky_blue):
+    def __init__(self, x, y, direction, boat_length, boat_width, speed=10, color=deep_sky_blue):
         self.center_x = x
         self.center_y = y
         self.direction = direction
@@ -34,10 +34,10 @@ class Boat(object):
         self.boat_width = boat_width
         self.color = color
         self.border_width = 1
+        self.speed = speed
 
 
-
-boat1 = Boat(100, 100, 0, 40, 20)
+boat1 = Boat(100, 100, 30, 40, 20, 10)
 
 def draw_boat(screen, boat):
     # 绘制多边形
@@ -131,25 +131,34 @@ while True:
         if event.type == KEYDOWN:
             if event.key == K_LEFT:
                 # 船的角度
-                boat1.direction -= 2
+                boat1.direction -= 5
 
             elif event.key == K_RIGHT:
                 # 船的角度
-                boat1.direction += 2
+                boat1.direction += 5
 
             elif event.key == K_UP:
-                move = (-1, 0)
+                boat1.speed += 1
 
             elif event.key == K_DOWN:
-                move = (1, 0)
+                boat1.speed -= 1
 
         elif event.type == KEYUP:
             # 如果用户放开了键盘，图就不要动了
             move = (0, 0)
 
+    # 计算运动
+    speed = boat1.speed
+    angle_degrees = boat1.direction
+    speed_x = speed * math.cos(math.radians(angle_degrees))
+    speed_y = speed * math.sin(math.radians(angle_degrees))
+
+    boat1.center_x = boat1.center_x + speed_x
+    boat1.center_y = boat1.center_y + speed_y
+
     # 绘制白色背景色
     screen.fill(white)
-
+    # 绘制boat1
     draw_boat(screen, boat1)
 
     pygame.display.update()
