@@ -7,12 +7,14 @@ from pygame.locals import *
 from random import randint
 from time import ctime,sleep
 import math
+from gameobjects.vector2 import Vector2
+
 
 pygame.init()
 
-# 30 * 30
-row = 30
-col = 30
+# 50 * 50
+row = 50
+col = 50
 
 # 每个方块宽高都是20px
 square_width = 20
@@ -24,6 +26,10 @@ black = (0, 0, 0)
 blue = (0, 0, 255)
 deep_sky_blue = (0, 191, 255)
 red = (255, 0, 0)
+
+# 定义下船转向的速度
+ANGLE_SPEED = 5
+
 
 class Boat(object):
     def __init__(self, x, y, direction, boat_length, boat_width, speed=10, color=deep_sky_blue):
@@ -145,6 +151,48 @@ text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) +
 text_surface_boat2 = font.render(u"Boat2, position:(" + str(round(boat2.center_x,2)) + "," + str(round(boat2.center_y,2)) + "), speed:" + str(boat2.speed) + ", direction:" + str(format_boat_direction(boat2.direction)), True, (0, 0, 255))
 
 
+# 将目标的位置转换为相对于追击者局部坐标的位置（局部坐标以追击者中心为原点，前进方向为y轴方向）
+# boat1 目标，boat2追击者
+def v_rotate_2d(boat1, boat2):
+    x_boat1 = boat1.center_x
+    y_boat1 = boat1.center_y
+
+    x_boat2 = boat2.center_x
+    y_boat2 = boat2.center_y
+
+    # 全局坐标系下，相对位置的向量
+    x1 = x_boat1 - x_boat2
+    y1 = y_boat1 - y_boat2
+
+    angle_a_degrees = boat2.direction
+    if x1 == 0:
+        angle_b_radians = math.pi * 0.5
+    else:
+        angle_b_radians = math.atan(y1 * 1.0 / x1)
+    angle_b_degrees = math.degrees(angle_b_radians)
+
+    # boat1在boat2的局部坐标系下，boat1中心与局部坐标系原点连线到局部坐标系x轴的角度
+    angle_c_degrees = 90 - (angle_a_degrees - angle_b_degrees)
+
+    # 两船距离
+    distance = math.sqrt(x1 ** 2 + y1 ** 2)
+    x2 = distance * math.sin(math.radians(angle_c_degrees))
+    y2 = distance * math.cos(math.radians(angle_c_degrees))
+    return Vector2(x2, y2)
+
+# 另一种实现
+def v_rotate_2d_2(boat1, boat2):
+
+    # 全局坐标系下，相对位置的向量
+    x1 = boat1.center_x - boat2.center_x
+    y1 = boat1.center_y - boat2.center_y
+
+    angle_a_degrees = boat2.direction
+    x2 = x1 * math.cos(math.radians(angle_a_degrees)) + y1 * math.sin(math.radians(angle_a_degrees))
+    y2 = -1.0 * x1 * math.sin(math.radians(angle_a_degrees)) + y1 * math.cos(math.radians(angle_a_degrees))
+    return Vector2(x2, y2)
+
+
 while True:
 
     for event in pygame.event.get():
@@ -153,11 +201,11 @@ while True:
         if event.type == KEYDOWN:
             if event.key == K_LEFT:
                 # 船的角度
-                boat1.direction -= 5
+                boat1.direction -= ANGLE_SPEED
 
             elif event.key == K_RIGHT:
                 # 船的角度
-                boat1.direction += 5
+                boat1.direction += ANGLE_SPEED
 
             elif event.key == K_UP:
                 boat1.speed += 1
@@ -181,6 +229,17 @@ while True:
 
     boat1.center_x = boat1.center_x + speed_x * time_passed_seconds
     boat1.center_y = boat1.center_y + speed_y * time_passed_seconds
+
+    # boat2进行追逐
+    vector_u = v_rotate_2d_2(boat1, boat2)
+    # 将向量u标准化
+    u_norm = vector_u.normalise()
+    if u_norm.x > 0:
+        boat2.direction -= ANGLE_SPEED
+    elif u_norm.x == 0:
+        pass
+    else:
+        boat2.direction += ANGLE_SPEED
 
     # 计算boat2的运动
     speed_boat2 = boat2.speed
