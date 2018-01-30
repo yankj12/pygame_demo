@@ -48,7 +48,11 @@ def format_boat_direction(direction):
         direction = math.fmod(direction, 360)
     return direction
 
+# 目标
 boat1 = Boat(100, 100, 30, 40, 20, 10)
+# 追击者
+boat2 = Boat(100, 400, 0, 40, 20, 20)
+
 
 def draw_boat(screen, boat):
     # 绘制多边形
@@ -138,6 +142,7 @@ clock = pygame.time.Clock()
 # 显示boat1的速度和角度
 font = pygame.font.SysFont("simsunnsimsun", 10)
 text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
+text_surface_boat2 = font.render(u"Boat2, position:(" + str(round(boat2.center_x,2)) + "," + str(round(boat2.center_y,2)) + "), speed:" + str(boat2.speed) + ", direction:" + str(format_boat_direction(boat2.direction)), True, (0, 0, 255))
 
 
 while True:
@@ -168,6 +173,7 @@ while True:
     time_passed_seconds = time_passed / 1000.0
 
     # 计算运动
+    # 计算boat1的运动
     speed = boat1.speed
     angle_degrees = boat1.direction
     speed_x = speed * math.cos(math.radians(angle_degrees))
@@ -176,14 +182,29 @@ while True:
     boat1.center_x = boat1.center_x + speed_x * time_passed_seconds
     boat1.center_y = boat1.center_y + speed_y * time_passed_seconds
 
+    # 计算boat2的运动
+    speed_boat2 = boat2.speed
+    angle_degrees_boat2 = boat2.direction
+    speed_x_boat2 = speed_boat2 * math.cos(math.radians(angle_degrees_boat2))
+    speed_y_boat2 = speed_boat2 * math.sin(math.radians(angle_degrees_boat2))
+
+    boat2.center_x = boat2.center_x + speed_x_boat2 * time_passed_seconds
+    boat2.center_y = boat2.center_y + speed_y_boat2 * time_passed_seconds
+
     # 绘制白色背景色
     screen.fill(white)
     # 绘制boat1
     draw_boat(screen, boat1)
+    # 绘制boat2
+    draw_boat(screen, boat2)
 
     # 显示boat1的速度和角度
     text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
+    text_surface_boat2 = font.render(
+        u"Boat2, position:(" + str(round(boat2.center_x, 2)) + "," + str(round(boat2.center_y, 2)) + "), speed:" + str(
+            boat2.speed) + ", direction:" + str(format_boat_direction(boat2.direction)), True, (0, 0, 255))
     screen.blit(text_surface, (0, 0))
+    screen.blit(text_surface_boat2, (0, 15))
 
     pygame.display.update()
     sleep(0.5)
