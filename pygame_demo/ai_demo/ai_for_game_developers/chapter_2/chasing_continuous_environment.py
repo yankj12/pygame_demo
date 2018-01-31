@@ -55,9 +55,9 @@ def format_boat_direction(direction):
     return direction
 
 # 目标
-boat1 = Boat(100, 100, 30, 40, 20, 10)
+boat1 = Boat(100, 600, 0, 40, 20, 10)
 # 追击者
-boat2 = Boat(100, 400, 0, 40, 20, 20)
+boat2 = Boat(100, 100, 30, 40, 20, 20)
 
 
 def draw_boat(screen, boat):
@@ -166,7 +166,12 @@ def v_rotate_2d(boat1, boat2):
 
     angle_a_degrees = boat2.direction
     if x1 == 0:
-        angle_b_radians = math.pi * 0.5
+        if y1 > 0:
+            angle_b_radians = math.pi * 0.5
+        elif y1 == 0:
+            pass
+        else:
+            angle_b_radians = -math.pi * 0.5
     else:
         angle_b_radians = math.atan(y1 * 1.0 / x1)
     angle_b_degrees = math.degrees(angle_b_radians)
@@ -181,13 +186,16 @@ def v_rotate_2d(boat1, boat2):
     return Vector2(x2, y2)
 
 # 另一种实现
+# 将目标的位置转换为相对于追击者局部坐标的位置（局部坐标以追击者中心为原点，前进方向为y轴方向）
+# boat1 目标，boat2追击者
+# 坐标系旋转变换公式
 def v_rotate_2d_2(boat1, boat2):
 
     # 全局坐标系下，相对位置的向量
     x1 = boat1.center_x - boat2.center_x
     y1 = boat1.center_y - boat2.center_y
 
-    angle_a_degrees = boat2.direction
+    angle_a_degrees = boat2.direction-90
     x2 = x1 * math.cos(math.radians(angle_a_degrees)) + y1 * math.sin(math.radians(angle_a_degrees))
     y2 = -1.0 * x1 * math.sin(math.radians(angle_a_degrees)) + y1 * math.cos(math.radians(angle_a_degrees))
     return Vector2(x2, y2)
@@ -234,6 +242,7 @@ while True:
     vector_u = v_rotate_2d_2(boat1, boat2)
     # 将向量u标准化
     u_norm = vector_u.normalise()
+    #print u_norm
     if u_norm.x > 0:
         boat2.direction -= ANGLE_SPEED
     elif u_norm.x == 0:
