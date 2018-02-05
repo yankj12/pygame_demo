@@ -189,11 +189,11 @@ def v_rotate_2d(boat1, boat2):
 # 将目标的位置转换为相对于追击者局部坐标的位置（局部坐标以追击者中心为原点，前进方向为y轴方向）
 # boat1 目标，boat2追击者
 # 坐标系旋转变换公式
-def v_rotate_2d_2(boat1, boat2):
+def v_rotate_2d_2(vector1, vector2):
 
     # 全局坐标系下，相对位置的向量
-    x1 = boat1.center_x - boat2.center_x
-    y1 = boat1.center_y - boat2.center_y
+    x1 = vector1.x - vector2.x
+    y1 = vector1.y - vector2.y
 
     angle_a_degrees = boat2.direction-90
     x2 = x1 * math.cos(math.radians(angle_a_degrees)) + y1 * math.sin(math.radians(angle_a_degrees))
@@ -234,12 +234,33 @@ while True:
     angle_degrees = boat1.direction
     speed_x = speed * math.cos(math.radians(angle_degrees))
     speed_y = speed * math.sin(math.radians(angle_degrees))
-
     boat1.center_x = boat1.center_x + speed_x * time_passed_seconds
     boat1.center_y = boat1.center_y + speed_y * time_passed_seconds
 
+    # 目标的速度向量
+    vector_speed_boat1 = Vector2(speed_x, speed_y)
+    # 追击者的速度向量
+    speed_boat2 = boat2.speed
+    angle_degrees_boat2 = boat2.direction
+    speed_x_boat2 = speed_boat2 * math.cos(math.radians(angle_degrees_boat2))
+    speed_y_boat2 = speed_boat2 * math.sin(math.radians(angle_degrees_boat2))
+    vector_speed_boat2 = Vector2(speed_x_boat2, speed_y_boat2)
+
+    # 速度向量之差
+    vector_speed_diff = vector_speed_boat1 - vector_speed_boat2
+
+    # 计算拦截
+    # 追击者与目标之间的距离向量
+    vector_distance = Vector2(boat1.center_x - boat2.center_x, boat1.center_y - boat2.center_y)
+
+    # 相遇的时间
+    expected_time_to_intervept = vector_distance.get_length() / vector_speed_diff.get_length()
+
+    expected_intercept_point = Vector2(boat1.center_x + vector_distance.x * expected_time_to_intervept, boat1.center_y + vector_distance.y * expected_time_to_intervept)
+
     # boat2进行追逐
-    vector_u = v_rotate_2d_2(boat1, boat2)
+    #vector_u = v_rotate_2d(boat1, expected_intercept_point)
+    vector_u = v_rotate_2d_2(expected_intercept_point, Vector2(boat2.center_x, boat2.center_y))
     # 将向量u标准化
     u_norm = vector_u.normalise()
     #print u_norm
