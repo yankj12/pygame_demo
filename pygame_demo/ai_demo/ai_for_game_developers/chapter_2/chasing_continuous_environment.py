@@ -244,11 +244,11 @@ while True:
     u_norm = vector_u.normalise()
     #print u_norm
     if u_norm.x > 0:
-        boat2.direction -= ANGLE_SPEED
+        boat2.direction -= ANGLE_SPEED * time_passed_seconds
     elif u_norm.x == 0:
         pass
     else:
-        boat2.direction += ANGLE_SPEED
+        boat2.direction += ANGLE_SPEED * time_passed_seconds
 
     # 计算boat2的运动
     speed_boat2 = boat2.speed
