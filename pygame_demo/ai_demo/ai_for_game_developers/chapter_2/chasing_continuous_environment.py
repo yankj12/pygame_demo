@@ -210,6 +210,52 @@ path_boat1.append(Vector2(boat1.center_x, boat1.center_y))
 path_boat2.append(Vector2(boat2.center_x, boat2.center_y))
 
 
+# 视线追逐方法
+# 视线追逐，如果目标在追击者的右边，则右转，在追击者的左边，则左转
+def do_chase(boat1, boat2):
+    time_passed = clock.tick(30)
+    time_passed_seconds = time_passed / 1000.0
+
+    # 计算运动
+    # 计算boat1的运动
+    speed = boat1.speed
+    angle_degrees = boat1.direction
+    speed_x = speed * math.cos(math.radians(angle_degrees))
+    speed_y = speed * math.sin(math.radians(angle_degrees))
+    boat1.center_x = boat1.center_x + speed_x * time_passed_seconds
+    boat1.center_y = boat1.center_y + speed_y * time_passed_seconds
+
+    # 追击者的速度向量
+    speed_boat2 = boat2.speed
+    angle_degrees_boat2 = boat2.direction
+    speed_x_boat2 = speed_boat2 * math.cos(math.radians(angle_degrees_boat2))
+    speed_y_boat2 = speed_boat2 * math.sin(math.radians(angle_degrees_boat2))
+
+    # boat2进行追逐
+    # vector_u = v_rotate_2d(boat1, expected_intercept_point)
+    vector_u = v_rotate_2d_2(Vector2(boat1.center_x, boat1.center_y), Vector2(boat2.center_x, boat2.center_y))
+    # 将向量u标准化
+    u_norm = vector_u.normalise()
+    # print u_norm
+    if u_norm.x > 0:
+        boat2.direction -= ANGLE_SPEED * time_passed_seconds
+    elif u_norm.x == 0:
+        pass
+    else:
+        boat2.direction += ANGLE_SPEED * time_passed_seconds
+
+    # 计算boat2的运动
+    speed_boat2 = boat2.speed
+    angle_degrees_boat2 = boat2.direction
+    speed_x_boat2 = speed_boat2 * math.cos(math.radians(angle_degrees_boat2))
+    speed_y_boat2 = speed_boat2 * math.sin(math.radians(angle_degrees_boat2))
+
+    boat2.center_x = boat2.center_x + speed_x_boat2 * time_passed_seconds
+    boat2.center_y = boat2.center_y + speed_y_boat2 * time_passed_seconds
+
+    return Vector2(boat1.center_x, boat1.center_y)
+
+
 # 拦截方法
 def do_intercept(boat1, boat2):
     time_passed = clock.tick(30)
@@ -296,6 +342,11 @@ while True:
             # 如果用户放开了键盘，图就不要动了
             move = (0, 0)
 
+    # 视线追逐
+    # 视线追逐，如果目标在追击者的右边，则右转，在追击者的左边，则左转
+    #expected_intercept_point = do_chase(boat1, boat2)
+
+    # 拦截式的追逐
     # 进行拦截相关的运算
     # 两船预期相遇点
     expected_intercept_point = do_intercept(boat1, boat2)
