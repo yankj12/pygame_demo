@@ -210,43 +210,10 @@ path_boat1.append(Vector2(boat1.center_x, boat1.center_y))
 path_boat2.append(Vector2(boat2.center_x, boat2.center_y))
 
 
-while True:
-
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            exit()
-        if event.type == KEYDOWN:
-            if event.key == K_LEFT:
-                # 船的角度
-                boat1.direction -= ANGLE_SPEED
-
-            elif event.key == K_RIGHT:
-                # 船的角度
-                boat1.direction += ANGLE_SPEED
-
-            elif event.key == K_UP:
-                boat1.speed += 1
-
-            elif event.key == K_DOWN:
-                boat1.speed -= 1
-
-        elif event.type == KEYUP:
-            # 如果用户放开了键盘，图就不要动了
-            move = (0, 0)
-
+# 拦截方法
+def do_intercept(boat1, boat2):
     time_passed = clock.tick(30)
     time_passed_seconds = time_passed / 1000.0
-
-    # 记录当前boat1和boat2的路径
-    # 单位是秒
-    current_second = time.time()
-    # 以1秒为时间间隔取小船的点
-    if current_second - last_second >= 1:
-        # 获取当前boat1和boat2的点，放入到路径中
-        path_boat1.append(Vector2(boat1.center_x, boat1.center_y))
-        path_boat2.append(Vector2(boat2.center_x, boat2.center_y))
-        # 将当前毫秒数赋值给上一秒毫秒数
-        last_second = current_second
 
     # 计算运动
     # 计算boat1的运动
@@ -277,14 +244,15 @@ while True:
     expected_time_to_intercept = vector_distance.get_length() / vector_speed_diff.get_length()
 
     # 计算预期的相遇点
-    expected_intercept_point = Vector2(boat1.center_x + vector_speed_boat1.x * expected_time_to_intercept, boat1.center_y + vector_speed_boat1.y * expected_time_to_intercept)
+    expected_intercept_point = Vector2(boat1.center_x + vector_speed_boat1.x * expected_time_to_intercept,
+                                       boat1.center_y + vector_speed_boat1.y * expected_time_to_intercept)
 
     # boat2进行追逐
-    #vector_u = v_rotate_2d(boat1, expected_intercept_point)
+    # vector_u = v_rotate_2d(boat1, expected_intercept_point)
     vector_u = v_rotate_2d_2(expected_intercept_point, Vector2(boat2.center_x, boat2.center_y))
     # 将向量u标准化
     u_norm = vector_u.normalise()
-    #print u_norm
+    # print u_norm
     if u_norm.x > 0:
         boat2.direction -= ANGLE_SPEED * time_passed_seconds
     elif u_norm.x == 0:
@@ -300,6 +268,48 @@ while True:
 
     boat2.center_x = boat2.center_x + speed_x_boat2 * time_passed_seconds
     boat2.center_y = boat2.center_y + speed_y_boat2 * time_passed_seconds
+
+    return expected_intercept_point
+
+
+while True:
+
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            exit()
+        if event.type == KEYDOWN:
+            if event.key == K_LEFT:
+                # 船的角度
+                boat1.direction -= ANGLE_SPEED
+
+            elif event.key == K_RIGHT:
+                # 船的角度
+                boat1.direction += ANGLE_SPEED
+
+            elif event.key == K_UP:
+                boat1.speed += 1
+
+            elif event.key == K_DOWN:
+                boat1.speed -= 1
+
+        elif event.type == KEYUP:
+            # 如果用户放开了键盘，图就不要动了
+            move = (0, 0)
+
+    # 进行拦截相关的运算
+    # 两船预期相遇点
+    expected_intercept_point = do_intercept(boat1, boat2)
+
+    # 记录当前boat1和boat2的路径
+    # 单位是秒
+    current_second = time.time()
+    # 以1秒为时间间隔取小船的点
+    if current_second - last_second >= 1:
+        # 获取当前boat1和boat2的点，放入到路径中
+        path_boat1.append(Vector2(boat1.center_x, boat1.center_y))
+        path_boat2.append(Vector2(boat2.center_x, boat2.center_y))
+        # 将当前毫秒数赋值给上一秒毫秒数
+        last_second = current_second
 
     # 绘制白色背景色
     screen.fill(white)
