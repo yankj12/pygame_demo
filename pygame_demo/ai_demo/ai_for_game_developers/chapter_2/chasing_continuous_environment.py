@@ -276,7 +276,8 @@ while True:
     # 相遇的时间
     expected_time_to_intercept = vector_distance.get_length() / vector_speed_diff.get_length()
 
-    expected_intercept_point = Vector2(boat1.center_x + vector_distance.x * expected_time_to_intercept, boat1.center_y + vector_distance.y * expected_time_to_intercept)
+    # 计算预期的相遇点
+    expected_intercept_point = Vector2(boat1.center_x + vector_speed_boat1.x * expected_time_to_intercept, boat1.center_y + vector_speed_boat1.y * expected_time_to_intercept)
 
     # boat2进行追逐
     #vector_u = v_rotate_2d(boat1, expected_intercept_point)
