@@ -319,6 +319,9 @@ while True:
     elif len(path_boat2) == 1:
         pygame.draw.aaline(screen, black, path_boat2[0], path_boat2[0] )
 
+    # 绘制追击者到预期相遇点的预期路线
+    pygame.draw.aaline(screen, red, (boat2.center_x, boat2.center_y), expected_intercept_point)
+
     # 显示boat1的速度和角度
     text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
     text_surface_boat2 = font.render(
