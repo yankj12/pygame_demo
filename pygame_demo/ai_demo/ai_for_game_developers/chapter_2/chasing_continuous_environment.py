@@ -8,13 +8,13 @@ from random import randint
 from time import ctime,sleep
 import math
 from gameobjects.vector2 import Vector2
-
+import time
 
 pygame.init()
 
 # 50 * 50
-row = 50
-col = 50
+row = 30
+col = 30
 
 # 每个方块宽高都是20px
 square_width = 20
@@ -55,7 +55,7 @@ def format_boat_direction(direction):
     return direction
 
 # 目标
-boat1 = Boat(100, 600, 0, 40, 20, 10)
+boat1 = Boat(100, 500, 0, 40, 20, 10)
 # 追击者
 boat2 = Boat(100, 100, 30, 40, 20, 20)
 
@@ -200,6 +200,15 @@ def v_rotate_2d_2(vector1, vector2):
     y2 = -1.0 * x1 * math.sin(math.radians(angle_a_degrees)) + y1 * math.cos(math.radians(angle_a_degrees))
     return Vector2(x2, y2)
 
+# 上一秒时候的毫秒数
+last_second = time.time()
+# boat1的路径
+path_boat1 = []
+# boat2的路径
+path_boat2 = []
+path_boat1.append(Vector2(boat1.center_x, boat1.center_y))
+path_boat2.append(Vector2(boat2.center_x, boat2.center_y))
+
 
 while True:
 
@@ -228,6 +237,17 @@ while True:
     time_passed = clock.tick(30)
     time_passed_seconds = time_passed / 1000.0
 
+    # 记录当前boat1和boat2的路径
+    # 单位是秒
+    current_second = time.time()
+    # 以1秒为时间间隔取小船的点
+    if current_second - last_second >= 1:
+        # 获取当前boat1和boat2的点，放入到路径中
+        path_boat1.append(Vector2(boat1.center_x, boat1.center_y))
+        path_boat2.append(Vector2(boat2.center_x, boat2.center_y))
+        # 将当前毫秒数赋值给上一秒毫秒数
+        last_second = current_second
+
     # 计算运动
     # 计算boat1的运动
     speed = boat1.speed
@@ -254,9 +274,9 @@ while True:
     vector_distance = Vector2(boat1.center_x - boat2.center_x, boat1.center_y - boat2.center_y)
 
     # 相遇的时间
-    expected_time_to_intervept = vector_distance.get_length() / vector_speed_diff.get_length()
+    expected_time_to_intercept = vector_distance.get_length() / vector_speed_diff.get_length()
 
-    expected_intercept_point = Vector2(boat1.center_x + vector_distance.x * expected_time_to_intervept, boat1.center_y + vector_distance.y * expected_time_to_intervept)
+    expected_intercept_point = Vector2(boat1.center_x + vector_distance.x * expected_time_to_intercept, boat1.center_y + vector_distance.y * expected_time_to_intercept)
 
     # boat2进行追逐
     #vector_u = v_rotate_2d(boat1, expected_intercept_point)
@@ -286,6 +306,17 @@ while True:
     draw_boat(screen, boat1)
     # 绘制boat2
     draw_boat(screen, boat2)
+
+    # 绘制boat1的路径
+    if len(path_boat1) > 1:
+        pygame.draw.lines(screen, black, False, path_boat1)
+    elif len(path_boat1) == 1:
+        pygame.draw.aaline(screen, black, path_boat1[0], path_boat1[0] )
+    # 绘制boat2的路径
+    if len(path_boat2) > 1:
+        pygame.draw.lines(screen, black, False, path_boat2)
+    elif len(path_boat2) == 1:
+        pygame.draw.aaline(screen, black, path_boat2[0], path_boat2[0] )
 
     # 显示boat1的速度和角度
     text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
