@@ -20,6 +20,8 @@ class AiEntity(object):
         # 其实在python中k_max_path_length和path_size是非必要的，可以直接len(path)解决
         # 定义路径变量
         self.path = []
+        # 设置偏移量
+        self.pattern_offset
 
 
     # 初始化路径
@@ -117,6 +119,24 @@ class AiEntity(object):
             self.path[i].row = self.path[i].row - origin.row
             self.path[i].col = self.path[i].col - origin.col
 
+    # 设置偏移量
+    def set_pattern_offset(self, pattern_offset=PathPoint(0,0)):
+        self.pattern_offset = pattern_offset
 
 
+
+
+# 准备一些数据
+entity_list = []
+
+entity = AiEntity(10)
+entity.initialize_path_array()
+entity.build_path_segment(PathPoint(2, 2), PathPoint(2, 10))
+entity.build_path_segment(PathPoint(2, 10), PathPoint(10, 10))
+entity.build_path_segment(PathPoint(10, 10), PathPoint(10, 2))
+entity.build_path_segment(PathPoint(10, 2), PathPoint(2, 2))
+entity.normalize_pattern()
+entity.set_pattern_offset(PathPoint(3, 3))
+
+entity_list.append(entity)
 
