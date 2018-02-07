@@ -90,3 +90,30 @@ def build_path_segment(current_point, end_point):
             if current_step >= k_max_path_length:
                 return
 
+
+
+class AiEntity(object):
+
+    def __init__(self):
+        self.k_max_path_length = 1
+        self.path_size = 1
+
+
+
+    # 标准化函数
+    # 将模式标准化，使其以相对坐标表示，而非绝对坐标。这样标准化的模式才不会在游戏领域里和特定的起点位置绑定在一起。
+    # 一旦把模式建立起来并且标准化，就能在任何游戏中使用。
+    def normalize_pattern(self):
+
+        origin = path[0]
+        for i in range(0, self.k_max_path_length, 1):
+            if path[i].row == -1 and path[i].col == -1:
+                self.path_size = i
+                break
+        for i in range(0, self.path_size, 1):
+            path[i].row = path[i].row - origin.row
+            path[i].col = path[i].col - origin.col
+
+
+
+
