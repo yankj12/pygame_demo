@@ -231,8 +231,8 @@ while True:
     move_pattern = entity_list[0]
     path = move_pattern.path
     current_step_index = current_step_index % move_pattern.path_size
-    ball.row = path[current_step_index].row
-    ball.col = path[current_step_index].col
+    ball.row = path[current_step_index].row + move_pattern.pattern_offset.row
+    ball.col = path[current_step_index].col + move_pattern.pattern_offset.col
 
     # 每隔0.5秒移动一次
     # 单位是秒
