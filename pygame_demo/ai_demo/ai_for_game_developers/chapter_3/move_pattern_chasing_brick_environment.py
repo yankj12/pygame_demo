@@ -58,8 +58,14 @@ class AiEntity(object):
                 current_step = i
                 break
 
-        step_row = -1 if delta_row < 0 else step_row = 1
-        step_col = -1 if delta_col < 0 else step_col = 1
+        if delta_row < 0:
+            step_row = -1
+        else:
+            step_row = 1
+        if delta_col < 0:
+            step_col = -1
+        else:
+            step_col = 1
 
         delta_row = math.fabs(delta_row * 2)
         delta_col = math.fabs(delta_col * 2)
@@ -129,7 +135,7 @@ class AiEntity(object):
 # 准备一些数据
 entity_list = []
 
-entity = AiEntity(10)
+entity = AiEntity(100)
 entity.initialize_path_array()
 entity.build_path_segment(PathPoint(2, 2), PathPoint(2, 10))
 entity.build_path_segment(PathPoint(2, 10), PathPoint(10, 10))
