@@ -116,10 +116,11 @@ class AiEntity(object):
     # 一旦把模式建立起来并且标准化，就能在任何游戏中使用。
     def normalize_pattern(self):
 
-        origin = self.path[0]
+        # 给origin赋值的时候，不能直接赋引用值
+        origin = PathPoint(self.path[0].row, self.path[0].col)
         for i in range(0, self.k_max_path_length, 1):
             if self.path[i].row == -1 and self.path[i].col == -1:
-                self.path_size = i
+                self.path_size = i + 1
                 break
         for i in range(0, self.path_size, 1):
             self.path[i].row = self.path[i].row - origin.row
@@ -145,4 +146,105 @@ entity.normalize_pattern()
 entity.set_pattern_offset(PathPoint(3, 3))
 
 entity_list.append(entity)
+
+
+import pygame
+from pygame.locals import *
+import time
+
+pygame.init()
+
+# 30 * 30
+row = 30
+col = 30
+
+# 每个方块宽高都是20px
+square_width = 20
+screen = pygame.display.set_mode((row * square_width, col * square_width), 0, 32)
+
+# 定义一些颜色
+white = (255, 255, 255)
+black = (0, 0, 0)
+blue = (0, 0, 255)
+deep_sky_blue = (0, 191, 255)
+red = (255, 0, 0)
+
+
+class Ball(object):
+    def __init__(self, row=0, col=0, color=white):
+        self.row = row
+        self.col = col
+        self.color = color
+        self.radius = square_width / 2
+
+    def update(self, move=(0,0)):
+        self.current_row_index += move[0]
+        self.current_col_index += move[1]
+
+        self.current_row_index = self.current_row_index%row
+        self.current_col_index = self.current_col_index%col
+
+        self.y = self.current_row_index * square_width + square_width / 2
+        self.x = self.current_col_index * square_width + square_width / 2
+
+
+def draw_ball(screen, ball):
+    #print '绘制小球'
+    # 绘制一个圆形
+    y = ball.row * square_width + square_width / 2
+    x = ball.col * square_width + square_width / 2
+
+    position = x, y
+    radius = square_width / 2
+    width = 1
+    color = ball.color
+
+    # pygame.draw.circle
+    # 原型：pygame.draw.circle(Surface, color, pos, radius, width=0): return Rect
+    # 当不传入width参数的时候，绘制的是一个填充了的圆
+    pygame.draw.circle(screen, color, position, radius)
+
+
+# 定义一个小球
+ball = Ball()
+current_step_index = 0
+# 上一秒的秒数
+last_second = time.time()
+
+
+while True:
+
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            exit()
+
+    # 绘制黑色背景色
+    screen.fill(deep_sky_blue)
+    # 绘制白色方格线
+    for r in range(0 , row + 1):
+        pygame.draw.aaline(screen, black, (0, r * square_width), (col * square_width, r * square_width))
+
+    for c in range(0, col + 1):
+        pygame.draw.aaline(screen, black, (c * square_width, 0), (c * square_width, col * square_width))
+
+    # 移动模式
+    move_pattern = entity_list[0]
+    path = move_pattern.path
+    current_step_index = current_step_index % move_pattern.path_size
+    ball.row = path[current_step_index].row
+    ball.col = path[current_step_index].col
+
+    # 每隔0.5秒移动一次
+    # 单位是秒
+    current_second = time.time()
+    # 每隔0.5秒移动一次
+    if current_second - last_second >= 0.5:
+        current_step_index += 1
+        # 将当前毫秒数赋值给上一秒毫秒数
+        last_second = current_second
+
+    # 绘制两个小球
+    draw_ball(screen, ball)
+
+    pygame.display.update()
 
