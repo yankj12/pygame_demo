@@ -21,7 +21,7 @@ class AiEntity(object):
         # 定义路径变量
         self.path = []
         # 设置偏移量
-        self.pattern_offset
+        self.pattern_offset = None
 
 
     # 初始化路径
