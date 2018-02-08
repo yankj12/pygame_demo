@@ -120,7 +120,7 @@ class AiEntity(object):
         origin = PathPoint(self.path[0].row, self.path[0].col)
         for i in range(0, self.k_max_path_length, 1):
             if self.path[i].row == -1 and self.path[i].col == -1:
-                self.path_size = i + 1
+                self.path_size = i
                 break
         for i in range(0, self.path_size, 1):
             self.path[i].row = self.path[i].row - origin.row
@@ -230,7 +230,6 @@ while True:
     # 移动模式
     move_pattern = entity_list[0]
     path = move_pattern.path
-    current_step_index = current_step_index % move_pattern.path_size
     ball.row = path[current_step_index].row + move_pattern.pattern_offset.row
     ball.col = path[current_step_index].col + move_pattern.pattern_offset.col
 
@@ -240,6 +239,7 @@ while True:
     # 每隔0.5秒移动一次
     if current_second - last_second >= 0.5:
         current_step_index += 1
+        current_step_index = current_step_index % move_pattern.path_size
         # 将当前毫秒数赋值给上一秒毫秒数
         last_second = current_second
 
