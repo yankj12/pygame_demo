@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import wx
+import os
+
 
 # 多行文本编辑器
 class my_frame(wx.Frame):
@@ -16,6 +18,7 @@ class my_frame(wx.Frame):
         # 创建窗口底部的状态栏
         self.CreateStatusBar()
         filemenu = wx.Menu()
+        menu_open = filemenu.Append(wx.ID_OPEN, "Open", "Open a file.")
         menu_exit = filemenu.Append(wx.ID_EXIT, "Exit", "Exit the program.")
         filemenu.AppendSeparator()
         menu_about = filemenu.Append(wx.ID_ABOUT, "About", "Information about this program.")
@@ -25,6 +28,7 @@ class my_frame(wx.Frame):
         self.Show(True)
 
         # 把出现的事件，同需要处理的函数连接起来
+        self.Bind(wx.EVT_MENU, self.on_open, menu_open)
         self.Bind(wx.EVT_MENU, self.on_exit, menu_exit)
         self.Bind(wx.EVT_MENU, self.on_about, menu_about)
 
@@ -39,6 +43,16 @@ class my_frame(wx.Frame):
 
     def on_exit(self, e):
         self.Close(True)
+
+    def on_open(self, e):
+        """open a file"""
+        self.dirname = ''
+        dlg = wx.FileDialog(self, "Choose a file.", self.dirname, "", "*.*")
+        if dlg.ShowModal() == wx.ID_OK:
+            self.filename = dlg.GetFilename()
+            self.dirname = dlg.GetDirectory()
+            f = open(os.path.join(self.dirname, self.filename), "r")
+        dlg.Destroy()
 
 
 app = wx.App(False)
