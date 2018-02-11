@@ -10,7 +10,12 @@ class my_frame(wx.Frame):
 
     """We simple derive a new class of frame"""
     def __init__(self, parent, title):
-        wx.Frame.__init__(self, parent, title=title, size=(300, 200))
+        self.filename = None
+        self.dirname = None
+        self.address = None
+        width = 800
+        height = width * 2 / 3
+        wx.Frame.__init__(self, parent, title=title, size=(width, height))
         # 继承来自wx.Frame的__init__方法。声明一个wx.TextCtrl控件
         # （简单的文本编辑控件）
         self.control = wx.TextCtrl(self, style=wx.TE_MULTILINE)
@@ -18,17 +23,24 @@ class my_frame(wx.Frame):
         # 创建窗口底部的状态栏
         self.CreateStatusBar()
         filemenu = wx.Menu()
+        menu_new = filemenu.Append(wx.ID_NEW, "New", "New a file.")
         menu_open = filemenu.Append(wx.ID_OPEN, "Open", "Open a file.")
         menu_save = filemenu.Append(wx.ID_SAVE, "Save", "Save this file.")
-        menu_exit = filemenu.Append(wx.ID_EXIT, "Exit", "Exit the program.")
         filemenu.AppendSeparator()
-        menu_about = filemenu.Append(wx.ID_ABOUT, "About", "Information about this program.")
+        menu_exit = filemenu.Append(wx.ID_EXIT, "Exit", "Exit the program.")
+
         menubar = wx.MenuBar()
-        menubar.Append(filemenu, u"设置")
+        menubar.Append(filemenu, u"File")
+
+        helpmenu = wx.Menu()
+        menu_about = helpmenu.Append(wx.ID_ABOUT, "About", "Information about this program.")
+        menubar.Append(helpmenu, u"Help")
+
         self.SetMenuBar(menubar)
         self.Show(True)
 
         # 把出现的事件，同需要处理的函数连接起来
+        self.Bind(wx.EVT_MENU, self.on_new, menu_new)
         self.Bind(wx.EVT_MENU, self.on_open, menu_open)
         self.Bind(wx.EVT_MENU, self.on_save, menu_save)
         self.Bind(wx.EVT_MENU, self.on_exit, menu_exit)
@@ -45,6 +57,15 @@ class my_frame(wx.Frame):
 
     def on_exit(self, e):
         self.Close(True)
+
+    def on_new(self, e):
+        # 清空编辑区内容
+        self.control.Clear()
+        # 文件相关的属性赋值为空
+        # 不清空self.dirname 默认保存到这个文件夹内
+        self.filename = None
+        self.address = None
+
 
     def on_open(self, e):
         """open a file"""
@@ -63,6 +84,18 @@ class my_frame(wx.Frame):
 
     def on_save(self, e):
         data = (self.control.GetValue()).encode(encoding="UTF-8")
+        # 保存文件
+        # 新增文件进行保存的时候，需要选择保存到哪个文件夹，以及文件名是什么
+        if self.address is None or self.address == "":
+            # 新增
+            file_dlg = wx.FileDialog(self, "Choose a file.", "", "", "*.*")
+            if file_dlg.ShowModal() == wx.ID_OK:
+                self.filename = file_dlg.GetFilename()
+                self.dirname = file_dlg.GetDirectory()
+                self.address = os.path.join(self.dirname, self.filename)
+            file_dlg.Destroy()
+
+        # 修改文件进行保存的时候，直接保存到原有文件即可
         f = open(self.address, "w")
         f.write(data)
         f.close()
@@ -71,6 +104,7 @@ class my_frame(wx.Frame):
         dlg.Destroy()
         self.control.Clear()
         self.control.AppendText("Welcome to use editor.\nA small text editor.")
+        self.address = None
 
 
 app = wx.App(False)
