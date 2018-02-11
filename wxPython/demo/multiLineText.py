@@ -16,13 +16,29 @@ class my_frame(wx.Frame):
         # 创建窗口底部的状态栏
         self.CreateStatusBar()
         filemenu = wx.Menu()
-        filemenu.Append(wx.ID_EXIT, "Exit", "Exit the program.")
+        menu_exit = filemenu.Append(wx.ID_EXIT, "Exit", "Exit the program.")
         filemenu.AppendSeparator()
-        filemenu.Append(wx.ID_ABOUT, "About", "Information about this program.")
+        menu_about = filemenu.Append(wx.ID_ABOUT, "About", "Information about this program.")
         menubar = wx.MenuBar()
         menubar.Append(filemenu, u"设置")
         self.SetMenuBar(menubar)
         self.Show(True)
+
+        # 把出现的事件，同需要处理的函数连接起来
+        self.Bind(wx.EVT_MENU, self.on_exit, menu_exit)
+        self.Bind(wx.EVT_MENU, self.on_about, menu_about)
+
+
+    def on_about(self, e):
+        # 创建一个对话框，有一个ok选项
+        dlg = wx.MessageDialog(self, "A small text editor.", "About small editor.", wx.OK)
+        # 显示对话框
+        dlg.ShowModal()
+        # 完成后销毁
+        dlg.Destroy()
+
+    def on_exit(self, e):
+        self.Close(True)
 
 
 app = wx.App(False)
