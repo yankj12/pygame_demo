@@ -19,6 +19,7 @@ class my_frame(wx.Frame):
         self.CreateStatusBar()
         filemenu = wx.Menu()
         menu_open = filemenu.Append(wx.ID_OPEN, "Open", "Open a file.")
+        menu_save = filemenu.Append(wx.ID_SAVE, "Save", "Save this file.")
         menu_exit = filemenu.Append(wx.ID_EXIT, "Exit", "Exit the program.")
         filemenu.AppendSeparator()
         menu_about = filemenu.Append(wx.ID_ABOUT, "About", "Information about this program.")
@@ -29,6 +30,7 @@ class my_frame(wx.Frame):
 
         # 把出现的事件，同需要处理的函数连接起来
         self.Bind(wx.EVT_MENU, self.on_open, menu_open)
+        self.Bind(wx.EVT_MENU, self.on_save, menu_save)
         self.Bind(wx.EVT_MENU, self.on_exit, menu_exit)
         self.Bind(wx.EVT_MENU, self.on_about, menu_about)
 
@@ -51,8 +53,24 @@ class my_frame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             self.filename = dlg.GetFilename()
             self.dirname = dlg.GetDirectory()
-            f = open(os.path.join(self.dirname, self.filename), "r")
+            self.address = os.path.join(self.dirname, self.filename)
+            f = open(self.address, "r")
+            file = (f.read()).decode(encoding="UTF-8")
+            f.close()
+            self.control.Clear()
+            self.control.AppendText(file)
         dlg.Destroy()
+
+    def on_save(self, e):
+        data = (self.control.GetValue()).encode(encoding="UTF-8")
+        f = open(self.address, "w")
+        f.write(data)
+        f.close()
+        dlg = wx.MessageDialog(self, "File saved.", "Info", wx.OK)
+        dlg.ShowModal()
+        dlg.Destroy()
+        self.control.Clear()
+        self.control.AppendText("Welcome to use editor.\nA small text editor.")
 
 
 app = wx.App(False)
