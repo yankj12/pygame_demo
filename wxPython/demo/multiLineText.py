@@ -15,6 +15,9 @@ class my_frame(wx.Frame):
         self.address = None
         width = 800
         height = width * 2 / 3
+
+        self.count = 5
+
         wx.Frame.__init__(self, parent, title=title, size=(width, height))
         # 继承来自wx.Frame的__init__方法。声明一个wx.TextCtrl控件
         # （简单的文本编辑控件）
@@ -37,6 +40,17 @@ class my_frame(wx.Frame):
         menubar.Append(helpmenu, u"Help")
 
         self.SetMenuBar(menubar)
+
+        self.toolbar = self.CreateToolBar()
+        tool_undo = self.toolbar.AddTool(wx.ID_UNDO, '', wx.Bitmap("icon/back_16.png"))
+        tool_redo = self.toolbar.AddTool(wx.ID_REDO, '', wx.Bitmap("icon/more_16.png"))
+        self.toolbar.EnableTool(wx.ID_REDO, False)
+        self.toolbar.AddSeparator()
+
+        tool_exit = self.toolbar.AddTool(wx.ID_EXIT, '', wx.Bitmap("icon/close_16.png"))
+        self.toolbar.Realize()
+
+        self.Centre()
         self.Show(True)
 
         # 把出现的事件，同需要处理的函数连接起来
@@ -45,6 +59,10 @@ class my_frame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_save, menu_save)
         self.Bind(wx.EVT_MENU, self.on_exit, menu_exit)
         self.Bind(wx.EVT_MENU, self.on_about, menu_about)
+
+        self.Bind(wx.EVT_TOOL, self.on_exit, tool_exit)
+        self.Bind(wx.EVT_TOOL, self.on_undo, tool_undo)
+        self.Bind(wx.EVT_TOOL, self.on_redo, tool_redo)
 
 
     def on_about(self, e):
@@ -106,6 +124,21 @@ class my_frame(wx.Frame):
         self.control.AppendText("Welcome to use editor.\nA small text editor.")
         self.address = None
 
+    def on_undo(self,e):
+        if self.count > 1 and self.count <= 5:
+            self.count = self.count -1
+        if self.count == 1:
+            self.toolbar.EnableTool(wx.ID_UNDO,False)
+        if self.count == 4:
+            self.toolbar.EnableTool(wx.ID_REDO,True)
+
+    def on_redo(self,e):
+        if self.count < 5 and self.count >= 1:
+            self.count = self.count + 1
+        if self.count == 5:
+            self.toolbar.EnableTool(wx.ID_REDO,False)
+        if self.count == 2:
+            self.toolbar.EnableTool(wx.ID_UNDO,True)
 
 app = wx.App(False)
 frame = my_frame(None, "Small Editor")
