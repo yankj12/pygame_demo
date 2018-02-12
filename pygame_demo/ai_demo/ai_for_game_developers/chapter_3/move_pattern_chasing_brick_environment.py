@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import math
-
+import random
 
 class PathPoint(object):
     def __init__(self, row, col):
@@ -131,7 +131,53 @@ class AiEntity(object):
         self.pattern_offset = pattern_offset
 
 
+    def follow_pattern(self, record_path):
+        possible_path = []
+        possible_path.append(PathPoint(0, 0))
+        possible_path.append(PathPoint(0, 0))
+        possible_path.append(PathPoint(0, 0))
+        possible_path.append(PathPoint(0, 0))
+        possible_path.append(PathPoint(0, 0))
+        possible_path.append(PathPoint(0, 0))
+        possible_path.append(PathPoint(0, 0))
+        possible_path.append(PathPoint(0, 0))
 
+        # 周围方块相对于当前点的相对位置
+        offset = []
+        offset.append(PathPoint(-1, -1))
+        offset.append(PathPoint(-1, 0))
+        offset.append(PathPoint(-1, 1))
+        offset.append(PathPoint(0, -1))
+        offset.append(PathPoint(0, 1))
+        offset.append(PathPoint(1, -1))
+        offset.append(PathPoint(1, 0))
+        offset.append(PathPoint(1, 1))
+
+        current = PathPoint(-1, -1)
+        if len(record_path) >= 1:
+            current.row = record_path[-1].row
+            current.col = record_path[-1].col
+
+        previous = PathPoint(-1, -1)
+        if len(record_path) >= 2:
+            previous.row = record_path[-2].row
+            previous.col = record_path[-2].col
+
+        j = 0
+        for i in range(0, 8, 1):
+            # self.pattern 需要在 build_path_segment 中初始化
+            if self.pattern[current.row + offset[i].row][current.col + offset[i].col] == 1:
+                if not (((current.row + offset[i].row) == previous.row)
+                         and ((current.col + offset[i].col) == previous.col)):
+                    possible_path[j].row = current.row + offset[i].row
+                    possible_path[j].col = current.row + offset[i].col
+                    j += 1
+
+        i = random.randint(0 , j-1)
+        # 如果我们记录下当前走过的所有路径，那么可以直接从记录下来的路径中查找 previous
+        previous.row = current.row
+        previous.col = current.col
+        return possible_path[i]
 
 # 准备一些数据
 entity_list = []
