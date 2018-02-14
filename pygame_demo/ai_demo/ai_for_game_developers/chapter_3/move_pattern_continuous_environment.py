@@ -10,29 +10,32 @@ import math
 from gameobjects.vector2 import Vector2
 import time
 
-pygame.init()
 
-# 50 * 50
-row = 30
-col = 30
 
-# 每个方块宽高都是20px
-square_width = 20
-screen = pygame.display.set_mode((row * square_width, col * square_width), 0, 32)
+# 600 * 600
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 600
 
 # 定义一些颜色
-white = (255, 255, 255)
-black = (0, 0, 0)
-blue = (0, 0, 255)
-deep_sky_blue = (0, 191, 255)
-red = (255, 0, 0)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
+DEEP_SKY_BLUE = (0, 191, 255)
+RED = (255, 0, 0)
 
 # 定义下船转向的速度
-ANGLE_SPEED = 5
+ANGLE_SPEED = 10
+
+# pygame初始化相关内容
+pygame.init()
+
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
+clock = pygame.time.Clock()
 
 
+# 定义一些类及相关方法
 class Boat(object):
-    def __init__(self, x, y, direction, boat_length, boat_width, speed=10, color=deep_sky_blue):
+    def __init__(self, x, y, direction, boat_length, boat_width, speed=20, color=DEEP_SKY_BLUE):
         self.center_x = x
         self.center_y = y
         self.direction = direction
@@ -53,10 +56,6 @@ def format_boat_direction(direction):
     else:
         direction = math.fmod(direction, 360)
     return direction
-
-# 目标
-boat1 = Boat(100, 500, 0, 40, 20, 10)
-
 
 
 def draw_boat(screen, boat):
@@ -103,40 +102,165 @@ def draw_boat(screen, boat):
     p5['x'] = center_x * 2 - p2['x']
     p5['y'] = center_y * 2 - p2['y']
 
-    # pygame.draw.circle
-    # 原型：pygame.draw.circle(Surface, color, pos, radius, width=0): return Rect
-    # 当不传入width参数的时候，绘制的是一个填充了的圆
-    #pygame.draw.circle(screen, color, position, radius)
-    # Rect(left,top,width,height)用来定义位置和宽高
-    #pygame.draw.rect(screen, color, [p1['x'], p1['y'], boat_length, boat_width], 0)
-    # polygon存在锯齿
-    #pygame.draw.polygon(screen, color, [(p1['x'], p1['y']), (p2['x'], p2['y']), (p3['x'], p3['y']), (p4['x'], p4['y']), (p5['x'], p5['y'])], 0)
-    # 消除锯齿
     pygame.draw.aalines(screen, color, True, [(p1['x'], p1['y']), (p2['x'], p2['y']), (p3['x'], p3['y']), (p4['x'], p4['y']), (p5['x'], p5['y'])], 1)
     # 画出中心
     pygame.draw.aaline(screen, color, (center_x, center_y), (center_x, center_y), 1)
 
 
-clock = pygame.time.Clock()
-# 显示boat1的速度和角度
-font = pygame.font.SysFont("simsunnsimsun", 10)
-text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
+
+class ControlData(object):
+
+    def __init__(self, delta_heading_degrees_limit, delta_position_limit,
+                 limit_heading_change, limit_position_change):
+        # 载具的方向变化，正数表示；负数表示
+        self.delta_heading_degrees_limit = delta_heading_degrees_limit
+        # 载具的位置变化
+        self.delta_position_limit = delta_position_limit
+        # limit_heading_change 为 True，则每轮仿真循环中载具的相对位置变化
+        # 会以 delta_heading_degrees_limit 来判断，是否进行下一个运动模式
+        self.limit_heading_change = limit_heading_change
+        # limit_position_change 为 True，则每轮仿真循环中载具的相对位置变化
+        # 会以 delta_position_limit 来判断，是否进行下一个运动模式
+        self.limit_position_change = limit_position_change
 
 
-# 另一种实现
-# 将目标的位置转换为相对于追击者局部坐标的位置（局部坐标以追击者中心为原点，前进方向为y轴方向）
-# boat1 目标，boat2追击者
-# 坐标系旋转变换公式
-def v_rotate_2d(vector1, vector2):
+# 记录状态改变的结构体
+class StateChangeData(object):
 
-    # 全局坐标系下，相对位置的向量
-    x1 = vector1.x - vector2.x
-    y1 = vector1.y - vector2.y
+    def __init__(self, initial_heading_degrees, initial_position,
+                 delta_heading_degress, delta_position, current_control_index):
+        self.initial_heading = initial_heading_degrees
+        # Vector2
+        self.initial_position = initial_position
+        self.delta_heading_degress = delta_heading_degress
+        self.delta_position = delta_position
+        self.current_control_index = current_control_index
 
-    angle_a_degrees = boat2.direction-90
-    x2 = x1 * math.cos(math.radians(angle_a_degrees)) + y1 * math.sin(math.radians(angle_a_degrees))
-    y2 = -1.0 * x1 * math.sin(math.radians(angle_a_degrees)) + y1 * math.cos(math.radians(angle_a_degrees))
-    return Vector2(x2, y2)
+
+def initial_pattern(boat, pattern_tracking):
+    initial_pattern_tracking(boat, pattern_tracking)
+
+
+def initial_pattern_tracking(boat, pattern_tracking):
+    pattern_tracking.current_control_index = 0
+    pattern_tracking.delta_heading_degress = 0
+    pattern_tracking.delta_position = 0
+
+    pattern_tracking.initial_heading = boat.direction
+    pattern_tracking.initial_position = Vector2(boat.center_x, boat.center_y)
+
+
+def do_pattern(boat, move_pattern, pattern_tracking):
+    time_passed = clock.tick(30)
+    time_passed_seconds = time_passed / 1000.0
+
+    current_control_index = pattern_tracking.current_control_index
+    current_control_data = move_pattern[current_control_index]
+    if current_control_data.limit_heading_change \
+            and ( math.fabs(pattern_tracking.delta_heading_degress) >= math.fabs(current_control_data.delta_heading_degrees_limit)) \
+            or current_control_data.limit_position_change\
+                    and (pattern_tracking.delta_position >= current_control_data.delta_position_limit):
+        initial_pattern_tracking(boat, pattern_tracking)
+        current_control_index += 1
+        pattern_tracking.current_control_index = current_control_index
+        if pattern_tracking.current_control_index >= len(move_pattern):
+            return False
+
+    # 计算运动
+
+    # 施加转向力
+    if current_control_data.delta_heading_degrees_limit > 0:
+        boat.direction += ANGLE_SPEED * time_passed_seconds
+
+    elif current_control_data.delta_heading_degrees_limit < 0:
+        boat.direction -= ANGLE_SPEED * time_passed_seconds
+
+    # 计算boat的前进
+    speed = boat.speed
+    angle_degrees = boat.direction
+    speed_x = speed * math.cos(math.radians(angle_degrees))
+    speed_y = speed * math.sin(math.radians(angle_degrees))
+    boat.center_x = boat.center_x + speed_x * time_passed_seconds
+    boat.center_y = boat.center_y + speed_y * time_passed_seconds
+
+    # 计算这组指令开始后，方向上的变化
+    delta_heading = boat.direction - pattern_tracking.initial_heading
+    pattern_tracking.delta_heading_degress = delta_heading
+    # 计算这组指令开始后，位置上的变化
+    delta_position_vector = Vector2(boat.center_x - pattern_tracking.initial_position.x,
+                                    boat.center_y - pattern_tracking.initial_position.y)
+    delta_position = delta_position_vector.length
+    pattern_tracking.delta_position = delta_position
+
+    return True
+
+
+def update_simulation(boat, move_pattern, pattern_tracking, patrol, zigzag):
+    if patrol:
+        if not do_pattern(boat, move_pattern, pattern_tracking):
+            initial_pattern_tracking(boat, pattern_tracking)
+
+    if zigzag:
+        if not do_pattern(boat, move_pattern, pattern_tracking):
+            initial_pattern_tracking(boat, pattern_tracking)
+
+
+# 定义一些变量
+# 目标
+boat1 = Boat(150, 100, 0, 40, 20, 20)
+
+PATROL_ARRAY_SIZE = 8
+ZIGZAG_ARRAY_SIZE = 4
+
+# 巡逻模式
+patrol_patterns = []
+# 蛇形模式
+zigzag_patterns = []
+
+# 数据类型为StateChangeData，用于记录这些模式在执行时位置和方向上的变化
+# self, initial_heading_degrees, initial_position, delta_heading_degress, delta_position, current_control_index
+pattern_tracking = StateChangeData(0, Vector2(0, 0), 0, 0, 0)
+
+# 前进200
+control_data = ControlData(delta_heading_degrees_limit=0, delta_position_limit=200, limit_heading_change=False, limit_position_change=True)
+patrol_patterns.append(control_data)
+# 右转90度
+control_data = ControlData(delta_heading_degrees_limit=90, delta_position_limit=0, limit_heading_change=True, limit_position_change=False)
+patrol_patterns.append(control_data)
+# 前进200
+control_data = ControlData(delta_heading_degrees_limit=0, delta_position_limit=200, limit_heading_change=False, limit_position_change=True)
+patrol_patterns.append(control_data)
+# 右转90度
+control_data = ControlData(delta_heading_degrees_limit=90, delta_position_limit=0, limit_heading_change=True, limit_position_change=False)
+patrol_patterns.append(control_data)
+# 前进200
+control_data = ControlData(delta_heading_degrees_limit=0, delta_position_limit=200, limit_heading_change=False, limit_position_change=True)
+patrol_patterns.append(control_data)
+# 右转90度
+control_data = ControlData(delta_heading_degrees_limit=90, delta_position_limit=0, limit_heading_change=True, limit_position_change=False)
+patrol_patterns.append(control_data)
+# 前进200
+control_data = ControlData(delta_heading_degrees_limit=0, delta_position_limit=200, limit_heading_change=False, limit_position_change=True)
+patrol_patterns.append(control_data)
+# 右转90度
+control_data = ControlData(delta_heading_degrees_limit=90, delta_position_limit=0, limit_heading_change=True, limit_position_change=False)
+patrol_patterns.append(control_data)
+
+
+# 蛇形模式
+# 前进100
+control_data = ControlData(delta_heading_degrees_limit=0, delta_position_limit=100, limit_heading_change=False, limit_position_change=True)
+zigzag_patterns.append(control_data)
+# 右转60度
+control_data = ControlData(delta_heading_degrees_limit=60, delta_position_limit=0, limit_heading_change=True, limit_position_change=False)
+zigzag_patterns.append(control_data)
+# 前进100
+control_data = ControlData(delta_heading_degrees_limit=0, delta_position_limit=100, limit_heading_change=False, limit_position_change=True)
+zigzag_patterns.append(control_data)
+# 左转60度
+control_data = ControlData(delta_heading_degrees_limit=-60, delta_position_limit=0, limit_heading_change=True, limit_position_change=False)
+zigzag_patterns.append(control_data)
+
 
 # 上一秒时候的毫秒数
 last_second = time.time()
@@ -145,6 +269,15 @@ path_boat1 = []
 path_boat1.append(Vector2(boat1.center_x, boat1.center_y))
 
 
+# 显示boat1的速度和角度
+font = pygame.font.SysFont("simsunnsimsun", 15)
+text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
+
+
+#
+initial_pattern(boat1, pattern_tracking)
+
+# 游戏主循环
 while True:
 
     for event in pygame.event.get():
@@ -169,17 +302,15 @@ while True:
             # 如果用户放开了键盘，图就不要动了
             move = (0, 0)
 
-    time_passed = clock.tick(30)
-    time_passed_seconds = time_passed / 1000.0
-
     # 计算运动
-    # 计算boat1的运动
-    speed = boat1.speed
-    angle_degrees = boat1.direction
-    speed_x = speed * math.cos(math.radians(angle_degrees))
-    speed_y = speed * math.sin(math.radians(angle_degrees))
-    boat1.center_x = boat1.center_x + speed_x * time_passed_seconds
-    boat1.center_y = boat1.center_y + speed_y * time_passed_seconds
+    # 巡逻运动
+    patrol = True
+    zigzag = False
+    update_simulation(boat1, patrol_patterns, pattern_tracking, patrol, zigzag)
+    # 蛇形运行
+    #patrol = True
+    #zigzag = False
+    #update_simulation(boat1, zigzag_patterns, pattern_tracking, patrol, zigzag)
 
     # 记录当前boat1和boat2的路径
     # 单位是秒
@@ -192,15 +323,15 @@ while True:
         last_second = current_second
 
     # 绘制白色背景色
-    screen.fill(white)
+    screen.fill(WHITE)
     # 绘制boat1
     draw_boat(screen, boat1)
 
     # 绘制boat1的路径
     if len(path_boat1) > 1:
-        pygame.draw.lines(screen, black, False, path_boat1)
+        pygame.draw.lines(screen, BLACK, False, path_boat1)
     elif len(path_boat1) == 1:
-        pygame.draw.aaline(screen, black, path_boat1[0], path_boat1[0] )
+        pygame.draw.aaline(screen, BLACK, path_boat1[0], path_boat1[0] )
 
     # 显示boat1的速度和角度
     text_surface = font.render(u"Boat1, position:(" + str(round(boat1.center_x,2)) + "," + str(round(boat1.center_y,2)) + "), speed:" + str(boat1.speed) + ", direction:" + str(format_boat_direction(boat1.direction)), True, (0, 0, 255))
@@ -208,4 +339,3 @@ while True:
     screen.blit(text_surface, (0, 0))
 
     pygame.display.update()
-    sleep(0.5)
