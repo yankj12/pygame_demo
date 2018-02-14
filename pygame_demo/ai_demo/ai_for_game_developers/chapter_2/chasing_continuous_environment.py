@@ -392,4 +392,3 @@ while True:
     screen.blit(text_surface_boat2, (0, 15))
 
     pygame.display.update()
-    sleep(0.5)
