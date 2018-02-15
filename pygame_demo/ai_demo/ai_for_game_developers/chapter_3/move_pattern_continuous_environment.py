@@ -328,7 +328,7 @@ while True:
             vector_1 = Vector2(last_1_point.x - last_2_point.x, last_1_point.y - last_2_point.y)
             vector_2 = Vector2(current_point.x - last_2_point.x, current_point.y - last_2_point.y)
 
-            if vector_1.x == 0 and vector_2 == 0 \
+            if vector_1.x == 0 and vector_2.x == 0 \
                     or vector_1.y / vector_1.x == vector_2.y / vector_2.x:
                 # 在一条直线上，弹出上一个点
                 pop_point = path_boat1.pop()
