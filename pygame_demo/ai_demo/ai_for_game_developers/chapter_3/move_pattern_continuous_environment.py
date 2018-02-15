@@ -317,8 +317,24 @@ while True:
     current_second = time.time()
     # 以1秒为时间间隔取小船的点
     if current_second - last_second >= 1:
+        # 如果连续3个点在一条直线上，那么中间点不保存
+        # 当前点
+        current_point = Vector2(boat1.center_x, boat1.center_y)
+        if len(path_boat1) >= 2:
+            # 上一个点
+            last_1_point = path_boat1[-1]
+            # 上上个点
+            last_2_point = path_boat1[-2]
+            vector_1 = Vector2(last_1_point.x - last_2_point.x, last_1_point.y - last_2_point.y)
+            vector_2 = Vector2(current_point.x - last_2_point.x, current_point.y - last_2_point.y)
+
+            if vector_1.x == 0 and vector_2 == 0 \
+                    or vector_1.y / vector_1.x == vector_2.y / vector_2.x:
+                # 在一条直线上，弹出上一个点
+                pop_point = path_boat1.pop()
+                #print pop_point.x, ',', pop_point.y
         # 获取当前boat1和boat2的点，放入到路径中
-        path_boat1.append(Vector2(boat1.center_x, boat1.center_y))
+        path_boat1.append(current_point)
         # 将当前毫秒数赋值给上一秒毫秒数
         last_second = current_second
 
