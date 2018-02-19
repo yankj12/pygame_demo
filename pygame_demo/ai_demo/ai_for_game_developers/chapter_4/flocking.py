@@ -20,7 +20,7 @@ DEEP_SKY_BLUE = (0, 191, 255)
 RED = (255, 0, 0)
 
 # 定义下船转向的速度
-ANGLE_SPEED = 10
+ANGLE_SPEED = 20
 # 定义下船的加速度
 ACCELERATED_SPEED = 10
 
@@ -94,23 +94,35 @@ class Boat(object):
 def update_single_unit(boat, force):
     time_passed = clock.tick(30)
     time_passed_seconds = time_passed / 1000.0
-    # print force
+    #print force
     # 转向方面的力
     if force.x > 0:
-        boat.direction -= ANGLE_SPEED * (math.fabs(force.x / STREERING_FORCE)) * time_passed_seconds
+        #boat.direction += ANGLE_SPEED * (math.fabs(force.x / STREERING_FORCE)) * time_passed_seconds
+        boat.direction += ANGLE_SPEED * time_passed_seconds
     elif force.x == 0:
         pass
     else:
-        boat.direction += ANGLE_SPEED * (math.fabs(force.x / STREERING_FORCE)) * time_passed_seconds
+        # 乘以 math.fabs(force.x / STREERING_FORCE)之后，力太小了
+        #boat.direction -= ANGLE_SPEED * (math.fabs(force.x / STREERING_FORCE)) * time_passed_seconds
+        boat.direction -= ANGLE_SPEED * time_passed_seconds
 
     # 前进后退方向的力
     if force.y > 0:
-        boat.speed -= ACCELERATED_SPEED * (math.fabs(force.y / STREERING_FORCE)) * time_passed_seconds
+        #boat.speed += ACCELERATED_SPEED * (math.fabs(force.y / STREERING_FORCE)) * time_passed_seconds
+        boat.speed += ACCELERATED_SPEED * time_passed_seconds
     elif force.y == 0:
         pass
     else:
-        boat.speed += ACCELERATED_SPEED * (math.fabs(force.y / STREERING_FORCE)) * time_passed_seconds
+        #boat.speed -= ACCELERATED_SPEED * (math.fabs(force.y / STREERING_FORCE)) * time_passed_seconds
+        boat.speed -= ACCELERATED_SPEED * time_passed_seconds
 
+    # 计算单位的真正位置
+    speed = boat.speed
+    angle_degrees = boat.direction
+    speed_x = speed * math.cos(math.radians(angle_degrees))
+    speed_y = speed * math.sin(math.radians(angle_degrees))
+    boat.center_x = boat.center_x + speed_x * time_passed_seconds
+    boat.center_y = boat.center_y + speed_y * time_passed_seconds
 
 # units是群聚中所有单位的数组
 # force是施加在群聚中leader上的力
@@ -253,12 +265,13 @@ def do_unit_ai(units, i):
 
         # 最后，做一个快速检查，以得知v和u的内积是否大于-1且小于1。这一定要做，因为这个内积要在计算两向量夹角的时候用到，
         # 而反余弦函数的自变量范围在-1到1之间
-        if math.fabs(v * u) < 1:
+        cos_result = (v.x*u.x + v.y*u.y)/(v.length * u.length)
+        if math.fabs(cos_result) < 1:
             # 实际计算满足凝聚规则的转向力。
             # 上面的m实际上已经计算出应该向左还是向右转，现在自己算的是转向的力度大小
             # fs.x += m * 一个系数 * math.degrees(math.acos(v*u))
             # 平均位置向量和速度向量夹角，也就是平均位置向量与units[i]的方向的夹角，夹角越大，也就是所需要的转向力越大
-            force.x += m * STREERING_FORCE * math.degrees(math.acos(v*u))
+            force.x += m * STREERING_FORCE * math.degrees(math.acos(cos_result))
 
 
     # 对齐规则
@@ -287,15 +300,121 @@ def do_unit_ai(units, i):
 
         # 最后，做一个快速检查，以得知v和u的内积是否大于-1且小于1。这一定要做，因为这个内积要在计算两向量夹角的时候用到，
         # 而反余弦函数的自变量范围在-1到1之间
-        if math.fabs(v * u) < 1:
+        cos_result = (v.x * u.x + v.y * u.y) / (v.length * u.length)
+        if math.fabs(cos_result) < 1:
             # 实际计算满足凝聚规则的转向力。
             # 上面的m实际上已经计算出应该向左还是向右转，现在自己算的是转向的力度大小
             # fs.x += m * 一个系数 * math.degrees(math.acos(v*u))
             # 平均速度向量和速度向量夹角，也就是平均位置向量与units[i]的方向的夹角，夹角越大，也就是所需要的转向力越大
-            force.x += m * STREERING_FORCE * math.degrees(math.acos(v * u))
+            force.x += m * STREERING_FORCE * math.degrees(math.acos(cos_result))
 
 
     # 处理转向力对units[i]的影响
     update_single_unit(units[i], force)
 
 
+# 群聚中所有单位的数组
+units = []
+
+# leader
+boat1 = Boat(100, 500, 0, 40, 20, 10)
+units.append(boat1)
+# follower
+boat2 = Boat(100, 100, 30, 40, 20, 20)
+units.append(boat2)
+
+
+
+def draw_boat(screen, boat):
+    # 绘制多边形
+    center_x = boat.center_x
+    center_y = boat.center_y
+    boat_length = boat.boat_length
+    boat_width = boat.boat_width
+
+    width = 1
+    color = boat.color
+
+    #boat_length边与x轴的夹角
+    angle_degrees = boat.direction
+
+    #对角线
+    diagonal = math.sqrt(boat_length ** 2 + boat_width ** 2)
+    #对角线与boat_length边的夹角
+    #弧度
+    angle1_radians = math.atan(boat_width * 1.0/boat_length)
+    angle1_degrees = math.degrees(angle1_radians)
+    #对角线与x轴夹角
+    angle2_degrees = angle_degrees - angle1_degrees
+
+    p4 = {}
+    p4['x'] = center_x + diagonal * 0.5 * math.cos(math.radians(angle2_degrees))
+    p4['y'] = center_y + diagonal * 0.5 * math.sin(math.radians(angle2_degrees))
+
+    angle3_degrees = angle_degrees + angle1_degrees
+    p2 = {}
+    p2['x'] = center_x + diagonal * 0.5 * math.cos(math.radians(angle3_degrees))
+    p2['y'] = center_y + diagonal * 0.5 * math.sin(math.radians(angle3_degrees))
+
+    p3 = {}
+    p3['x'] = center_x + (boat_length + boat_width) * 0.5 * math.cos(math.radians(angle_degrees))
+    p3['y'] = center_y + (boat_length + boat_width) * 0.5 * math.sin(math.radians(angle_degrees))
+
+    # 对称性
+    p1 = {}
+    p1['x'] = center_x * 2 - p4['x']
+    p1['y'] = center_y * 2 - p4['y']
+
+    p5 = {}
+    p5['x'] = center_x * 2 - p2['x']
+    p5['y'] = center_y * 2 - p2['y']
+
+    # pygame.draw.circle
+    # 原型：pygame.draw.circle(Surface, color, pos, radius, width=0): return Rect
+    # 当不传入width参数的时候，绘制的是一个填充了的圆
+    #pygame.draw.circle(screen, color, position, radius)
+    # Rect(left,top,width,height)用来定义位置和宽高
+    #pygame.draw.rect(screen, color, [p1['x'], p1['y'], boat_length, boat_width], 0)
+    # polygon存在锯齿
+    #pygame.draw.polygon(screen, color, [(p1['x'], p1['y']), (p2['x'], p2['y']), (p3['x'], p3['y']), (p4['x'], p4['y']), (p5['x'], p5['y'])], 0)
+    # 消除锯齿
+    pygame.draw.aalines(screen, color, True, [(p1['x'], p1['y']), (p2['x'], p2['y']), (p3['x'], p3['y']), (p4['x'], p4['y']), (p5['x'], p5['y'])], 1)
+    # 画出中心
+    pygame.draw.aaline(screen, color, (center_x, center_y), (center_x, center_y), 1)
+
+
+# 游戏主循环
+while True:
+    time_passed = clock.tick(30)
+    # force是施加在单位上的力，force.x表示转向方面的力，force.y表示前进后退方向的力
+    force = Vector2(0, 0)
+
+    pressed_keys = pygame.key.get_pressed()
+    if pressed_keys[K_ESCAPE]:
+        exit()
+    if pressed_keys[K_LEFT]:
+        force.x = -1
+    if pressed_keys[K_RIGHT]:
+        force.x = 1
+    if pressed_keys[K_UP]:
+        force.y = 1
+    if pressed_keys[K_DOWN]:
+        force.y = -1
+
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            exit()
+
+    # 处理群聚中的单位运动
+    #update_simulation(units, Vector2(force.x, force.y))
+    # 测试 update_single_unit 方法
+    update_single_unit(boat1, Vector2(force.x, force.y))
+
+    # 绘制白色背景色
+    screen.fill(WHITE)
+    # 绘制boat1
+    draw_boat(screen, boat1)
+    # 绘制boat2
+    draw_boat(screen, boat2)
+
+    pygame.display.update()
