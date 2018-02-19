@@ -21,6 +21,8 @@ RED = (255, 0, 0)
 
 # 定义下船转向的速度
 ANGLE_SPEED = 10
+# 定义下船的加速度
+ACCELERATED_SPEED = 10
 
 # 单位的长度和宽度
 UNIT_WIDTH = 20
@@ -36,11 +38,15 @@ WIDE_VIEW_FIELD_ANGLE_DEGREES = 270
 LIMITED_VIEW_FIELD_ANGLE_DEGREES = 180
 NARROW_VIEW_FIELD_ANGLE_DEGREES = 90
 
-# 不同视野的安全半径因子
-# 安全半径 = 安全半径因子 × 单位长度
-WIDE_VIEW_FIELD_REDIUS_FACTOR = 1.5
-LIMITED_VIEW_FIELD_REDIUS_FACTOR = 2.0
-NARROW_VIEW_FIELD_REDIUS_FACTOR = 3.0
+# 视野半径因子
+# 视野半径 = 视野半径因子 × 单位长度
+WIDE_VIEW_FIELD_REDIUS_FACTOR = 5
+LIMITED_VIEW_FIELD_REDIUS_FACTOR = 10
+NARROW_VIEW_FIELD_REDIUS_FACTOR = 15
+
+# 分隔距离因子
+# 安全距离 = 分隔距离因子 × 单位长度
+SEPARATION_FACTOR = 3.0
 
 # 为了调整单位的转向和前进后退，施加在单位上的一个力。真正施加在单位上的力是参考这个力进行调整的
 STREERING_FORCE = 10
@@ -82,14 +88,40 @@ class Boat(object):
         self.is_leader = is_leader
 
 
-def update_simulation(units):
+# 对单个单位施加力之后，更新单个单位的速度和转向
+# unit是受力单位
+# force是施加的力，force.x表示转向方面的力，force.y表示前进后退方向的力
+def update_single_unit(boat, force):
+    time_passed = clock.tick(30)
+    time_passed_seconds = time_passed / 1000.0
+    # print force
+    # 转向方面的力
+    if force.x > 0:
+        boat.direction -= ANGLE_SPEED * (math.fabs(force.x / STREERING_FORCE)) * time_passed_seconds
+    elif force.x == 0:
+        pass
+    else:
+        boat.direction += ANGLE_SPEED * (math.fabs(force.x / STREERING_FORCE)) * time_passed_seconds
+
+    # 前进后退方向的力
+    if force.y > 0:
+        boat.speed -= ACCELERATED_SPEED * (math.fabs(force.y / STREERING_FORCE)) * time_passed_seconds
+    elif force.y == 0:
+        pass
+    else:
+        boat.speed += ACCELERATED_SPEED * (math.fabs(force.y / STREERING_FORCE)) * time_passed_seconds
+
+
+# units是群聚中所有单位的数组
+# force是施加在群聚中leader上的力
+def update_simulation(units, force):
     dt = time.time()
     # 初始化后端缓冲区
 
     # 更新玩家控制的单位units[0]
     # 玩家通过左右键控制方向
     leader = units[0]
-    # TODO
+    update_single_unit(leader, force)
 
     # 单位移动到屏幕边界的时候从另外一侧的屏幕出现
     if leader.center_x == SCREEN_WIDTH:
@@ -122,6 +154,8 @@ def update_simulation(units):
     # 把后端缓冲区复制到屏幕上
 
 
+# units是群聚中所有单位的数组
+# i为当前所处理的单位在units中的索引下标
 def do_unit_ai(units, i):
 
     # 临近单位数量
@@ -156,28 +190,44 @@ def do_unit_ai(units, i):
                     in_view = True
                 else:
                     in_view = False
-                safety_redius = WIDE_VIEW_FIELD_REDIUS_FACTOR * UNIT_LENGTH
+                view_field_redius = WIDE_VIEW_FIELD_REDIUS_FACTOR * UNIT_LENGTH
             if LIMITED_VIEW:
                 if view_field_degrees <= LIMITED_VIEW_FIELD_ANGLE_DEGREES / 2.0:
                     in_view = True
                 else:
                     in_view = False
-                safety_redius = LIMITED_VIEW_FIELD_REDIUS_FACTOR * UNIT_LENGTH
+                view_field_redius = LIMITED_VIEW_FIELD_REDIUS_FACTOR * UNIT_LENGTH
             if NARROW_VIEW:
                 if view_field_degrees <= NARROW_VIEW_FIELD_ANGLE_DEGREES / 2.0:
                     in_view = True
                 else:
                     in_view = False
-                safety_redius = NARROW_VIEW_FIELD_REDIUS_FACTOR * UNIT_LENGTH
+                view_field_redius = NARROW_VIEW_FIELD_REDIUS_FACTOR * UNIT_LENGTH
             if in_view:
                 # 如果在视野内，并且距离小于安全距离，那么应该远离
-                if delta.length <= safety_redius:
+                if delta.length <= view_field_redius:
                     # TODO
                     average_position += Vector2(units[j].center_x, units[j].center_y)
                     speed_x = units[j].speed * math.cos(math.radians(units[j].direction))
                     speed_y = units[j].speed * math.sin(math.radians(units[j].direction))
                     average_speed += Vector2(speed_x, speed_y)
                     neighbors += 1
+
+            # 分隔
+            # 分隔意指我们想让每个单位彼此间保持最小距离。
+            # 即，根据凝聚和对齐规则，他们会试着靠近一点。我们不想让这些单位撞在一起，或者更糟的是，在某个时刻重叠在一起。
+            # 因此，我们采用分隔手段，让每个单位和其视野内的单位保持某一预定的最小间隔距离
+            if in_view:
+                if delta.length <= SEPARATION_FACTOR * UNIT_LENGTH:
+                    # 因为此处是计算分隔，所以m和计算凝聚和对齐时不同
+                    if w.x < 0:
+                        # 如果w的x值小于0，则必须右转（左侧）
+                        m = 1
+                    elif w.x > 0:
+                        # 如果w的x值大于0，则表示临近单位的平均位置位于units[i]的右侧，units[i]需要左转
+                        m = -1
+                    # delta是units[j]和units[i]的距离
+                    force.x += m * STREERING_FORCE * SEPARATION_FACTOR * UNIT_LENGTH / delta.length
 
     # 凝聚规则
     # 凝聚意指，我们想让所有单位待在同一个群体当中。
@@ -244,7 +294,8 @@ def do_unit_ai(units, i):
             # 平均速度向量和速度向量夹角，也就是平均位置向量与units[i]的方向的夹角，夹角越大，也就是所需要的转向力越大
             force.x += m * STREERING_FORCE * math.degrees(math.acos(v * u))
 
-    # 分割
-    # 分隔意指我们想让每个单位彼此间保持最小距离。
-    # 即，根据凝聚和对齐规则，他们会试着靠近一点。我们不想让这些单位撞在一起，或者更糟的是，在某个时刻重叠在一起。
-    # 因此，我们采用分隔手段，让每个单位和其视野内的单位保持某一预定的最小间隔距离
+
+    # 处理转向力对units[i]的影响
+    update_single_unit(units[i], force)
+
+
