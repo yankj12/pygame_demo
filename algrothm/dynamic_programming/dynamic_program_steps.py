@@ -19,12 +19,14 @@ dp = []
 
 def calculate_steps(n):
 
-    if n == 1 or n == 2:
+    if n == 1:
         if len(dp) < 1:
             dp.append(1)
         else:
             dp[n-1] = 1
+        return n
 
+    if n == 2:
         if len(dp) < 2:
             dp.append(2)
         else:
